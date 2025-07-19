@@ -25,7 +25,14 @@ jobs:
           python get_replies.py
           python generate_html.py
 
-      - name: Commit and push updated index.html
+      - name: Ensure replies.json exists
+        run: |
+          if [ ! -f replies.json ]; then
+            echo "[]" > replies.json
+            echo "📝 Created empty replies.json"
+          fi
+
+      - name: Commit and push updated index.html and replies.json
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
