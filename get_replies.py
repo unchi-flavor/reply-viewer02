@@ -14,17 +14,13 @@ class NitterRepliesCollector:
     def __init__(self):
         self.nitter_instances = [
             "https://nitter.poast.org",
-            "https://nitter.privacydev.net", 
+            "https://nitter.privacydev.net",
             "https://nitter.net",
             "https://n.opnxng.com",
             "https://nitter.it"
         ]
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-            'Accept': 'text/html',
-            'Accept-Language': 'en-US,en;q=0.9,ja;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
         }
         self.target_users = os.getenv('TARGET_USERS', 'elonmusk').split(',')
         self.max_tweets_per_user = int(os.getenv('MAX_TWEETS', '50'))
@@ -35,11 +31,11 @@ class NitterRepliesCollector:
                 test_url = f"{instance}/search?f=tweets&q=test"
                 response = requests.get(test_url, headers=self.headers, timeout=10)
                 if response.status_code == 200:
-                    print(f"Using nitter instance: {instance}")
+                    print(f"✅ Using nitter instance: {instance}")
                     return instance
-            except requests.RequestException as e:
-                print(f"Failed to connect to {instance}: {e}")
-        raise Exception("No working nitter instances available")
+            except requests.RequestException:
+                continue
+        raise Exception("❌ No working nitter instances available")
 
     def get_user_timeline(self, username, instance):
         try:
@@ -48,7 +44,7 @@ class NitterRepliesCollector:
             response.raise_for_status()
             return response.text
         except requests.RequestException as e:
-            print(f"Error fetching timeline for {username}: {e}")
+            print(f"❌ Error fetching timeline for {username}: {e}")
             return None
 
     def parse_timeline(self, html, username):
@@ -64,100 +60,81 @@ class NitterRepliesCollector:
                 if tweet and tweet['is_reply']:
                     replies.append(tweet)
             except Exception as e:
-                print(f"Tweet parse error: {e}")
-                print(f"Problematic container: {container}")
+                print(f"⚠️ Tweet parse error: {e}")
         return replies
 
     def extract_tweet_data(self, container, username):
-        text_elem = container.find('div', class_='tweet-content')
+        content = container.find('div', class_='tweet-content')
+        if not content:
+            return None
+        text_elem = content.find('div', class_='tweet-text')
         if not text_elem:
-            raise ValueError("No tweet content")
-
-        inner = text_elem.find('div', class_='tweet-text')
-        if not inner:
-            raise ValueError("No tweet-text")
-        text = inner.get_text(strip=True)
+            return None
+        text = text_elem.get_text(strip=True)
 
         date_elem = container.find('span', class_='tweet-date')
         timestamp = date_elem.get('title') if date_elem else None
 
         tweet_link = container.find('a', class_='tweet-link')
         tweet_id = None
+        reply_to_id = None
         if tweet_link:
-            match = re.search(r'/status/(\d+)', tweet_link.get('href', ''))
+            href = tweet_link.get('href', '')
+            match = re.search(r'/status/(\d+)', href)
             if match:
                 tweet_id = match.group(1)
+            # reply_to_id は取れない場合が多いため今は保留
+            # 取得したい場合はツイート本文中の "@xxxx" を元に処理が必要
 
-        # fallback id if missing
-        if not tweet_id:
-            tweet_id = f"{text[:20]}_{timestamp}"
+        reply_url = f"https://twitter.com/{username}/status/{tweet_id}" if tweet_id else None
 
         return {
             'id': tweet_id,
             'username': username,
             'text': text,
             'timestamp': timestamp,
-            'stats': self.extract_tweet_stats(container),
             'collected_at': datetime.now().isoformat(),
+            'reply_to_id': reply_to_id,
+            'reply_url': reply_url,
             'is_reply': self.is_reply(text)
         }
 
-    def extract_tweet_stats(self, container):
-        stats = {'replies': 0, 'retweets': 0, 'likes': 0, 'quotes': 0}
-        try:
-            statbox = container.find('div', class_='tweet-stats')
-            if statbox:
-                for icon in statbox.find_all('div', class_='icon-container'):
-                    text = icon.get_text(strip=True)
-                    val = self.extract_number_from_text(text)
-                    html = str(icon)
-                    if 'comment' in html:
-                        stats['replies'] = val
-                    elif 'retweet' in html:
-                        stats['retweets'] = val
-                    elif 'heart' in html:
-                        stats['likes'] = val
-                    elif 'quote' in html:
-                        stats['quotes'] = val
-        except Exception as e:
-            print(f"Stats extract error: {e}")
-        return stats
-
-    def extract_number_from_text(self, text):
-        text = text.upper().strip()
-        multiplier = 1
-        if 'K' in text:
-            multiplier = 1000
-            text = text.replace('K', '')
-        elif 'M' in text:
-            multiplier = 1000000
-            text = text.replace('M', '')
-        numbers = re.findall(r'[\d.]+', text)
-        return int(float(numbers[0]) * multiplier) if numbers else 0
-
     def is_reply(self, text):
-        if not text:
-            return False
-        return text.strip().startswith('@') and not text.strip().startswith('RT')
+        return text.strip().startswith('@') and not text.strip().lower().startswith('rt')
 
     def collect_all_replies(self):
         try:
             instance = self.find_working_instance()
         except Exception as e:
-            print(f"No instance available: {e}")
+            print(e)
             return []
+
         all_replies = []
         for username in self.target_users:
             username = username.strip()
             if not username:
                 continue
-            print(f"Collecting replies for @{username}")
+            print(f"📥 Collecting replies for @{username}")
             html = self.get_user_timeline(username, instance)
             replies = self.parse_timeline(html, username)
-            print(f"→ {len(replies)} replies")
             all_replies.extend(replies)
             time.sleep(random.uniform(5, 10))
-        return all_replies
+
+        # ✅ ここで「2週間以内」のみにフィルタ
+        cutoff = datetime.now() - timedelta(days=14)
+        recent_replies = [
+            r for r in all_replies
+            if r.get("timestamp") and self._within_range(r["timestamp"], cutoff)
+        ]
+        print(f"📦 {len(recent_replies)} replies kept (within 2 weeks)")
+        return recent_replies
+
+    def _within_range(self, timestamp_str, cutoff_dt):
+        try:
+            ts = datetime.fromisoformat(timestamp_str)
+            return ts >= cutoff_dt
+        except:
+            return False
 
     def save_replies(self, new_replies):
         if not new_replies:
@@ -182,33 +159,19 @@ class NitterRepliesCollector:
             combined = sorted(existing + uniques, key=lambda x: x['collected_at'], reverse=True)[:1000]
             with open('replies.json', 'w', encoding='utf-8') as f:
                 json.dump(combined, f, ensure_ascii=False, indent=2)
-            self.update_grouped_data(combined)
-            print(f"Saved {len(uniques)} new replies. Total: {len(combined)}")
+            print(f"💾 Saved {len(uniques)} new replies. Total: {len(combined)}")
         else:
             print("No new unique replies found.")
 
-    def update_grouped_data(self, replies):
-        from collections import defaultdict
-        grouped = defaultdict(list)
-        for r in replies:
-            try:
-                dt = datetime.fromisoformat(r['collected_at'])
-                key = dt.strftime('%Y-%m-%d %H:00')
-                grouped[key].append(r)
-            except:
-                grouped['unknown'].append(r)
-        with open('replies_grouped.json', 'w', encoding='utf-8') as f:
-            json.dump(dict(sorted(grouped.items(), reverse=True)), f, ensure_ascii=False, indent=2)
-
 def main():
-    print(f"Collecting started: {datetime.now().isoformat()}")
+    print(f"▶️ Start: {datetime.now().isoformat()}")
     collector = NitterRepliesCollector()
     try:
         replies = collector.collect_all_replies()
         collector.save_replies(replies)
-        print("Done.")
+        print("✅ Done.")
     except Exception as e:
-        print(f"Failed: {e}")
+        print(f"❌ Failed: {e}")
         raise
 
 if __name__ == "__main__":
