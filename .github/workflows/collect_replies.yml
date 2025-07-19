@@ -1,5 +1,8 @@
 name: Auto Collect Replies
 
+permissions:
+  contents: write
+
 on:
   schedule:
     - cron: '0 0,3,6,9,12,15 * * *'  # JSTで9時, 12時, 15時, 18時, 21時, 0時
