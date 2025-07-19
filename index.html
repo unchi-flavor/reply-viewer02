@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Potta+One&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Xリプライビューア</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    .thread { border: 1px solid #999; padding: 10px; margin-bottom: 20px; border-radius: 10px; }
+    .original { font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #444; }
+    .reply-box { border-top: 1px dashed #ccc; padding: 8px 0; }
+    .reply-text { font-size: 16px; }
+    .meta { font-size: 12px; margin-top: 4px; color: #666; }
+    a { color: #1da1f2; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h2>リプライ一覧（元ツイートごとに表示）</h2>
+  <div id="replies"></div>
+
+  <script>
+    fetch('replies_grouped.json')
+      .then(response => response.json())
+      .then(data => {
+        const container = document.getElementById('replies');
+        data.forEach(thread => {
+          const threadBox = document.createElement('div');
+          threadBox.className = 'thread';
+
+          const original = document.createElement('div');
+          original.className = 'original';
+          original.textContent = `元ツイート: ${thread.original_text}`;
+          threadBox.appendChild(original);
+
+          thread.replies.forEach(reply => {
+            const box = document.createElement('div');
+            box.className = 'reply-box';
+
+            const text = document.createElement('div');
+            text.className = 'reply-text';
+            text.textContent = reply.reply_text;
+
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+
+            const url = `https://twitter.com/${reply.reply_user}/status/${reply.reply_id}`;
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = "_blank";
+            link.textContent = "リプライを開く";
+
+            meta.textContent = `${new Date(reply.reply_time).toLocaleString()} ・ `;
+            meta.appendChild(link);
+
+            box.appendChild(text);
+            box.appendChild(meta);
+            threadBox.appendChild(box);
+          });
+
+          container.appendChild(threadBox);
+        });
+      })
+      .catch(error => {
+        document.getElementById('replies').textContent = '読み込みエラー: ' + error;
+      });
+  </script>
+</body>
+</html>
