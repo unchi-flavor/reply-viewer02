@@ -41,7 +41,7 @@ class NitterRepliesCollector:
             try:
                 print(f"🔍 Testing instance: {instance}")
                 test_url = f"{instance}/search?f=tweets&q=test"
-                response = requests.get(test_url, headers=self.headers, timeout=10)
+                response = self.scraper.get(test_url, headers=self.headers, timeout=10)  # ←ここを変更
                 if response.status_code == 200:
                     print(f"✅ Using nitter instance: {instance}")
                     return instance
