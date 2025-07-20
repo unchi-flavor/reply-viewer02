@@ -11,7 +11,7 @@ def fetch_instance_urls():
     if res.status_code != 200:
         raise Exception("Failed to fetch instance list")
     html = res.text
-    urls = re.findall(r'https://[a-zA-Z0-9\.\-]+', html)
+    urls = re.findall(r'https://[a-zA-Z0-9\.\-]*nitter[a-zA-Z0-9\.\-]*', html)
     return urls
 
 def check_instance(url):
