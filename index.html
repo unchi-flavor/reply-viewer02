@@ -1,105 +1,92 @@
-import json
-from datetime import datetime, timedelta, timezone
-import os
-from collections import defaultdict
+<!DOCTYPE html>
+<html lang='ja'>
+<head>
+<meta charset='UTF-8'>
+<title>リプライ一覧</title>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<style>
+body { font-family: sans-serif; background: #f5f5f5; padding: 20px; }
+.group { background: white; padding: 20px; margin-bottom: 30px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+.group h3 { font-size: 1em; color: #333; margin-bottom: 1em; }
+.reply { border-left: 4px solid #1da1f2; padding: 10px 15px; margin-bottom: 10px; background: #fefefe; border-radius: 4px; }
+.reply-text { margin-bottom: 5px; }
+.meta { font-size: 0.85em; color: #666; }
+.meta a { color: #1da1f2; text-decoration: none; }
+</style>
+</head>
+<body>
+<h1>📬 最近のリプライ（2週間以内）</h1>
+<div class='group'>
+<h3>🧵 元ツイート不明</h3>
+<div class='reply'>
+<div class='reply-text'>絵心ゼロでもがんばって絵を描いたら、AIがやたら具体的に褒めてくれた。う、うれしい…！
+https://news.denfaminicogamer.jp/kikakuthetower/250720g…
 
-# 日本時間のタイムゾーンを定義
-JST = timezone(timedelta(hours=9))
+“描写の中に独自の解釈が見え。視覚的魅力がある”だって！
+…とか喜んでばかりもいられない、AIと絵師をめぐる物語を描くメッセージ性の詰まった作品『愛よさらば』をプレイしてきた</div>
+<div class='meta'>by @unknown / 2025-07-20 19:36 / <a href='#' target='_blank'>🔗 リプを見る</a></div>
+</div>
+<div class='reply'>
+<div class='reply-text'>絵心ゼロでもがんばって絵を描いたら、AIがやたら具体的に褒めてくれた。う、うれしい…！
+https://news.denfaminicogamer.jp/kikakuthetower/250720g…
 
-def load_replies():
-    try:
-        with open("replies.json", "r", encoding="utf-8") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
+“描写の中に独自の解釈が見え。視覚的魅力がある”だって！
+…とか喜んでばかりもいられない、AIと絵師をめぐる物語を描くメッセージ性の詰まった作品『愛よさらば』をプレイしてきた</div>
+<div class='meta'>by @unknown / 2025-07-20 19:36 / <a href='#' target='_blank'>🔗 リプを見る</a></div>
+</div>
+<div class='reply'>
+<div class='reply-text'>絵心ゼロでもがんばって絵を描いたら、AIがやたら具体的に褒めてくれた。う、うれしい…！
+https://news.denfaminicogamer.jp/kikakuthetower/250720g…
 
-def format_timestamp(ts_str):
-    try:
-        dt = datetime.fromisoformat(ts_str)
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)  # UTC想定
-        dt = dt.astimezone(JST)
-        return dt.strftime("%Y-%m-%d %H:%M")
-    except:
-        return ts_str or "不明"
+“描写の中に独自の解釈が見え。視覚的魅力がある”だって！
+…とか喜んでばかりもいられない、AIと絵師をめぐる物語を描くメッセージ性の詰まった作品『愛よさらば』をプレイしてきた</div>
+<div class='meta'>by @unknown / 2025-07-20 19:35 / <a href='#' target='_blank'>🔗 リプを見る</a></div>
+</div>
+<div class='reply'>
+<div class='reply-text'>絵心ゼロでもがんばって絵を描いたら、AIがやたら具体的に褒めてくれた。う、うれしい…！
+https://news.denfaminicogamer.jp/kikakuthetower/250720g…
 
-def escape_html(text):
-    if not text:
-        return ""
-    return (text.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace('"', "&quot;")
-                .replace("'", "&#x27;"))
+“描写の中に独自の解釈が見え。視覚的魅力がある”だって！
+…とか喜んでばかりもいられない、AIと絵師をめぐる物語を描くメッセージ性の詰まった作品『愛よさらば』をプレイしてきた</div>
+<div class='meta'>by @unknown / 2025-07-20 19:35 / <a href='#' target='_blank'>🔗 リプを見る</a></div>
+</div>
+<div class='reply'>
+<div class='reply-text'>絵心ゼロでもがんばって絵を描いたら、AIがやたら具体的に褒めてくれた。う、うれしい…！
+https://news.denfaminicogamer.jp/kikakuthetower/250720g…
 
-def group_by_reply_to_id(replies):
-    grouped = defaultdict(list)
-    originals = {}
-    for r in replies:
-        key = r.get("reply_to_id") or "unknown"
-        grouped[key].append(r)
-        if key != "unknown" and key not in originals:
-            originals[key] = r.get("reply_to_text", "(元ツイート本文なし)")
-    return grouped, originals
+“描写の中に独自の解釈が見え。視覚的魅力がある”だって！
+…とか喜んでばかりもいられない、AIと絵師をめぐる物語を描くメッセージ性の詰まった作品『愛よさらば』をプレイしてきた</div>
+<div class='meta'>by @unknown / 2025-07-20 19:35 / <a href='#' target='_blank'>🔗 リプを見る</a></div>
+</div>
+<div class='reply'>
+<div class='reply-text'>少女のトラウマを探って取り除く心療タイピングゲーム『Pain Pain Go Away！』は「ほんわか＋不穏」の配分が絶妙で、続きが気になる
+https://news.denfaminicogamer.jp/kikakuthetower/250720h…
 
-def generate_html():
-    replies = load_replies()
-    grouped, originals = group_by_reply_to_id(replies)
+“カニさんカチューシャ”な見た目の革新的器具で患者の心に潜り、トラウマを根本治療。
+……いや、出てくるトラウマ、思ったより怖いな！？</div>
+<div class='meta'>by @unknown / 2025-07-20 19:35 / <a href='#' target='_blank'>🔗 リプを見る</a></div>
+</div>
+<div class='reply'>
+<div class='reply-text'>『怪獣８号 THE GAME』事前登録者数50万人の突破により「亜白ミナ」のキャラクター配布が決定
+https://news.denfaminicogamer.jp/news/250720a
 
-    html = [
-        "<!DOCTYPE html>",
-        "<html lang='ja'>",
-        "<head>",
-        "<meta charset='UTF-8'>",
-        "<title>リプライ一覧</title>",
-        "<meta name='viewport' content='width=device-width, initial-scale=1.0'>",
-        "<style>",
-        "body { font-family: sans-serif; background: #f5f5f5; padding: 20px; }",
-        ".group { background: white; padding: 20px; margin-bottom: 30px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }",
-        ".original-tweet { font-size: 0.9em; color: #666; font-style: italic; margin-bottom: 1em; }",
-        ".reply { border-left: 4px solid #1da1f2; padding: 10px 15px; margin-bottom: 10px; background: #fefefe; border-radius: 4px; }",
-        ".reply-text { margin-bottom: 5px; }",
-        ".meta { font-size: 0.85em; color: #666; }",
-        ".meta a { color: #1da1f2; text-decoration: none; }",
-        "</style>",
-        "</head>",
-        "<body>",
-        "<h1>📬 最近のリプライ（2週間以内）</h1>"
-    ]
+アニメ第2期の放送も始まった松本直也氏『怪獣８号』のゲーム化タイトル。新たな目標として、85万人突破で「保科宗四郎」のキャラクター配布も行われるという</div>
+<div class='meta'>by @unknown / 2025-07-20 19:35 / <a href='#' target='_blank'>🔗 リプを見る</a></div>
+</div>
+<div class='reply'>
+<div class='reply-text'>『怪獣８号 THE GAME』事前登録者数50万人の突破により「亜白ミナ」のキャラクター配布が決定
+https://news.denfaminicogamer.jp/news/250720a
 
-    if not replies:
-        html.append("<p>リプライデータが見つかりません。</p>")
-    else:
-        for reply_to_id, reply_list in grouped.items():
-            html.append("<div class='group'>")
+アニメ第2期の放送も始まった松本直也氏『怪獣８号』のゲーム化タイトル。新たな目標として、85万人突破で「保科宗四郎」のキャラクター配布も行われるという</div>
+<div class='meta'>by @unknown / 2025-07-20 19:35 / <a href='#' target='_blank'>🔗 リプを見る</a></div>
+</div>
+<div class='reply'>
+<div class='reply-text'>期待のインディーゲーム『事故物件だよ！うらみちゃん』が目指したのは「2000年頃のゲームが持っていた『ワクワク感』」
+https://news.denfaminicogamer.jp/interview/250719d…
 
-            # 元ツイートの内容
-            original_text = escape_html(originals.get(reply_to_id, "元ツイート不明"))
-            html.append(f"<div class='original-tweet'>{original_text}</div>")
-
-            for reply in reply_list:
-                username = escape_html(reply.get("username", "unknown"))
-                text = escape_html(reply.get("text", ""))
-                time_str = format_timestamp(reply.get("timestamp"))
-                reply_url = reply.get("reply_url", "#")
-
-                html.append("<div class='reply'>")
-                html.append(f"<div class='reply-text'>{text}</div>")
-                html.append(f"<div class='meta'>by @{username} / {time_str} / <a href='{reply_url}' target='_blank'>🔗 リプを見る</a></div>")
-                html.append("</div>")
-
-            html.append("</div>")  # group end
-
-    html.append("<p style='text-align:center;color:#888;font-size:0.9em;'>最終更新: " + format_timestamp(datetime.now(timezone.utc).isoformat()) + "</p>")
-    html.append("</body></html>")
-
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write("\n".join(html))
-
-    print("✅ index.html を生成しました。")
-
-def main():
-    generate_html()
-
-if __name__ == "__main__":
-    main()
+『UFO -A day in the life-』や『ROOMMANIA＃203』などの名作をオマージュしつつ、全力で「自分の好き」を表現する開発者に本作の狙いを聞いた</div>
+<div class='meta'>by @unknown / 2025-07-20 19:35 / <a href='#' target='_blank'>🔗 リプを見る</a></div>
+</div>
+</div>
+<p style='text-align:center;color:#888;font-size:0.9em;'>最終更新: 2025-07-20 21:08</p>
+</body></html>
