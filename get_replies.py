@@ -32,10 +32,12 @@ class NitterRepliesCollector:
     def find_working_instance(self):
         for instance in self.nitter_instances:
             try:
-                res = self.scraper.get(f"{instance}/search?q=test", headers=self.headers, timeout=10)
-                if res.status_code == 200:
+                test_url = f"{instance}/search?q=test"
+                res = self.scraper.get(test_url, headers=self.headers, timeout=10)
+                if res.status_code == 200 and "timeline" in res.text.lower():
                     return instance
-            except:
+            except Exception as e:
+                print(f"⚠️ Failed {instance}: {e}")
                 continue
         raise Exception("No working Nitter instance found.")
 
