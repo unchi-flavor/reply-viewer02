@@ -18,6 +18,12 @@ def get_mentions_for_user(page, username):
     search_url = f"https://twitter.com/search?q=to%3A{username}&f=live"
     page.goto(search_url)
     time.sleep(5)
+
+    # ページをスクロールして最大限リプを取得
+    for _ in range(3):
+        page.keyboard.press("PageDown")
+        time.sleep(1)
+
     soup = BeautifulSoup(page.content(), "html.parser")
     articles = soup.find_all("article")
 
@@ -38,11 +44,18 @@ def get_mentions_for_user(page, username):
         tweet_link = article.find("a", href=True)
         tweet_url = "https://twitter.com" + tweet_link["href"] if tweet_link else ""
 
+        # 投稿時刻を取得
+        time_elem = article.find("time")
+        if time_elem and time_elem.has_attr("datetime"):
+            tweet_time = time_elem["datetime"]
+        else:
+            tweet_time = datetime.now().isoformat()  # 取れなければ現在時刻
+
         now = datetime.now().isoformat()
         replies.append({
             "username": username_reply,
             "text": text,
-            "timestamp": now,
+            "timestamp": tweet_time,
             "reply_url": tweet_url,
             "reply_to_id": "",  # 現時点では不明
             "collected_at": now,
@@ -58,14 +71,14 @@ def _within_range(timestamp_str, cutoff_dt):
     try:
         parsed = parser.parse(timestamp_str)
         return parsed >= cutoff_dt
-    except:
+    except Exception as e:
         return False
 
 def save_replies(new_replies):
     try:
         with open('replies.json', 'r', encoding='utf-8') as f:
             existing = json.load(f)
-    except:
+    except Exception:
         existing = []
 
     existing_keys = {r['text'][:100] for r in existing}
