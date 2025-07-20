@@ -7,18 +7,20 @@ OUTPUT_FILE = "nitter_instances.json"
 
 def fetch_instance_urls():
     print("🌐 Fetching instance list from HTML page...")
-    res = requests.get(HTML_URL)
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    res = requests.get(HTML_URL, headers=headers)
     if res.status_code != 200:
         raise Exception("Failed to fetch instance list")
     html = res.text
     urls = re.findall(r'https://[a-zA-Z0-9\.\-]*nitter[a-zA-Z0-9\.\-]*', html)
-    return urls
+    return list(set(urls))  # 重複除去
 
 def check_instance(url):
     try:
         res = requests.get(f"{url}/search?f=tweets&q=test", timeout=5)
         return res.status_code == 200
-    except:
+    except Exception as e:
+        print(f"   ⚠️ {url} error: {e}")
         return False
 
 def main():
