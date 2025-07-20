@@ -14,10 +14,10 @@ class NitterRepliesCollector:
     def __init__(self):
         self.nitter_instances = [
             "https://nitter.poast.org",
-            "https://nitter.privacydev.net",
-            "https://nitter.net",
-            "https://n.opnxng.com",
-            "https://nitter.it"
+            "https://nitter.catsarch.com",
+            "https://nitter.zapashcanon.fr",
+            "https://nitter.kavin.rocks",
+            "https://nitter.salastil.com"
         ]
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
