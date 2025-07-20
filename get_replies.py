@@ -15,27 +15,26 @@ DAYS_LIMIT = int(os.getenv("DAYS_LIMIT", "7"))
 
 def get_mentions_for_user(page, username):
     replies = []
-    search_url = f"https://twitter.com/search?q=%40{username}&f=live"
+    search_url = f"https://twitter.com/search?q=to%3A{username}&f=live"
     page.goto(search_url)
     time.sleep(5)
     soup = BeautifulSoup(page.content(), "html.parser")
     articles = soup.find_all("article")
 
     for article in articles:
-        user_elem = article.find("a", href=True)
         text_elem = article.find("div", attrs={"data-testid": "tweetText"})
-
-        if not (user_elem and text_elem):
+        if not text_elem:
             continue
-
-        if f"@{username.lower()}" not in text_elem.text.lower():
-            continue
-
-        # ツイート本文とユーザー名
-        username_reply = user_elem.text.strip()
         text = text_elem.text.strip()
 
-        # tweet ID URL推測
+        # ユーザー名（表示名とID）取得
+        user_block = article.find("div", attrs={"data-testid": "User-Name"})
+        if user_block:
+            username_reply = user_block.get_text(strip=True)
+        else:
+            username_reply = "unknown"
+
+        # ツイートリンク
         tweet_link = article.find("a", href=True)
         tweet_url = "https://twitter.com" + tweet_link["href"] if tweet_link else ""
 
