@@ -10,15 +10,14 @@ def load_replies():
     except FileNotFoundError:
         return []
 
-# 日本時間のタイムゾーンを定義
 JST = timezone(timedelta(hours=9))
 
 def format_timestamp(ts_str):
     try:
         dt = datetime.fromisoformat(ts_str)
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)  # UTC想定
-        dt = dt.astimezone(JST)  # JSTに変換
+            dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.astimezone(JST)
         return dt.strftime("%Y-%m-%d %H:%M")
     except:
         return ts_str or "不明"
@@ -32,16 +31,16 @@ def escape_html(text):
                 .replace('"', "&quot;")
                 .replace("'", "&#x27;"))
 
-def group_by_reply_to_id(replies):
+def group_by_tweet(replies):
     grouped = defaultdict(list)
     for r in replies:
-        key = r.get("in_reply_to") or "unknown"
+        key = r.get("reply_url") or "unknown"
         grouped[key].append(r)
     return grouped
 
 def generate_html():
     replies = load_replies()
-    grouped = group_by_reply_to_id(replies)
+    grouped = group_by_tweet(replies)
 
     html = [
         "<!DOCTYPE html>",
@@ -53,7 +52,7 @@ def generate_html():
         "<style>",
         "body { font-family: sans-serif; background: #f5f5f5; padding: 20px; }",
         ".group { background: white; padding: 20px; margin-bottom: 30px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }",
-        ".group h3 { font-size: 1em; color: #333; margin-bottom: 1em; }",
+        ".group .original { font-size: 0.9em; color: #666; margin-bottom: 10px; }",
         ".reply { border-left: 4px solid #1da1f2; padding: 10px 15px; margin-bottom: 10px; background: #fefefe; border-radius: 4px; }",
         ".reply-text { margin-bottom: 5px; }",
         ".meta { font-size: 0.85em; color: #666; }",
@@ -67,24 +66,25 @@ def generate_html():
     if not replies:
         html.append("<p>リプライデータが見つかりません。</p>")
     else:
-        for reply_to_id, reply_list in grouped.items():
+        for tweet_url, reply_list in grouped.items():
             html.append("<div class='group'>")
 
-            # 元ツイートIDの見出し（reply_to_idが不明なら省略）
-            if reply_to_id != "unknown":
-                html.append(f"<h3>🧵 元ツイID: {reply_to_id}</h3>")
-            else:
-                html.append("<h3>🧵 元ツイート不明</h3>")
+            # 一番古いリプを元ツイートと仮定
+            base = reply_list[-1]
+            base_text = escape_html(base.get("text", "（元ツイート不明）"))
+            html.append(f"<div class='original'>🧵 元ツイート: {base_text}</div>")
 
             for reply in reply_list:
-                username = escape_html(reply.get("reply_user", "unknown"))
+                if reply == base:
+                    continue
+                username = escape_html(reply.get("username", "unknown"))
                 text = escape_html(reply.get("text", ""))
                 time_str = format_timestamp(reply.get("timestamp"))
-                link = reply.get("in_reply_to", "#")
-            
+                link = reply.get("reply_url", "#")
+
                 html.append("<div class='reply'>")
                 html.append(f"<div class='reply-text'>{text}</div>")
-                html.append(f"<div class='meta'>by @{username} / {time_str} / <a href='{link}' target='_blank'>🔗 リプを見る</a></div>")
+                html.append(f"<div class='meta'>by @{username} / {time_str} / <a href='{link}' target='_blank'>🔗 リプ元へ</a></div>")
                 html.append("</div>")
 
             html.append("</div>")  # group end
