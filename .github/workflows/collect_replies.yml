@@ -5,6 +5,10 @@ on:
     - cron: '0 0,3,6,9,12 * * *'  # JSTで9時, 12時, 15時, 18時, 21時
   workflow_dispatch:
 
+# 🔧 ① Push権限を明示的に付与（重要）
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -39,4 +43,5 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git add replies.json index.html
           git commit -m "🤖 Auto update replies [skip ci]" || echo "No changes"
-          git push
+          # 🔧 ② アクセストークン付きURLに変更（重要）
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
