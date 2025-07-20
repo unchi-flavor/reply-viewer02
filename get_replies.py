@@ -1,4 +1,5 @@
 import requests
+from requests.exceptions import SSLError, ConnectionError
 import json
 import re
 from bs4 import BeautifulSoup
@@ -37,11 +38,16 @@ class NitterRepliesCollector:
                 res = self.scraper.get(test_url, headers=self.headers, timeout=10)
                 if res.status_code == 200 and "timeline" in res.text.lower():
                     return instance
-            except Exception as e:
-                print(f"⚠️ Failed {instance}: {e}")
+            except SSLError as e:
+                print(f"⚠️ SSLエラー: {instance} をスキップします ({e})")
                 continue
-        raise Exception("No working Nitter instance found.")
-
+            except ConnectionError as e:
+                print(f"⚠️ 接続エラー: {instance} をスキップします ({e})")
+                continue
+            except Exception as e:
+                print(f"⚠️ その他のエラー: {instance} ({e})")
+                continue
+        raise Exception("No working Nitter instance found.")    
     def get_user_tweet_urls(self, username, instance):
         url = f"{instance}/{username}"
         res = self.scraper.get(url, headers=self.headers, timeout=10)
