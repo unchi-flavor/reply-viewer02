@@ -10,48 +10,50 @@ from playwright.sync_api import sync_playwright
 load_dotenv()
 
 TARGET_USERS = os.getenv("TARGET_USERS", "elonmusk").split(",")
-MAX_TWEETS = int(os.getenv("MAX_TWEETS", "10"))
+MAX_REPLIES = int(os.getenv("MAX_REPLIES", "100"))
+DAYS_LIMIT = int(os.getenv("DAYS_LIMIT", "7"))
 
-def get_replies_from_tweet(page, tweet_url, username):
+def get_mentions_for_user(page, username):
     replies = []
-    page.goto(tweet_url)
+    search_url = f"https://twitter.com/search?q=%40{username}&f=live"
+    page.goto(search_url)
     time.sleep(5)
     soup = BeautifulSoup(page.content(), "html.parser")
-    items = soup.find_all("article")
+    articles = soup.find_all("article")
 
-    if not items:
-        print("⚠️ No tweet content found.")
-        return replies
+    for article in articles:
+        user_elem = article.find("a", href=True)
+        text_elem = article.find("div", attrs={"data-testid": "tweetText"})
 
-    # 先頭の記事を元ツイートと仮定
-    first_item = items[0]
-    original_text_elem = first_item.find("div", attrs={"data-testid": "tweetText"})
-    original_text = original_text_elem.text.strip() if original_text_elem else "[元ツイート取得失敗]"
+        if not (user_elem and text_elem):
+            continue
 
-    # 残りはリプライと仮定
-    for item in items[1:]:
-        user_elem = item.find("a", href=True)
-        text_elem = item.find("div", attrs={"data-testid": "tweetText"})
-        if user_elem and text_elem:
-            timestamp = datetime.now().isoformat()
-            replies.append({
-                "username": user_elem.text.strip(),
-                "text": text_elem.text.strip(),
-                "timestamp": timestamp,
-                "reply_to_id": tweet_url.split("/")[-1],
-                "reply_url": tweet_url,
-                "collected_at": timestamp,
-                "original_text": original_text
-            })
+        if f"@{username.lower()}" not in text_elem.text.lower():
+            continue
+
+        # ツイート本文とユーザー名
+        username_reply = user_elem.text.strip()
+        text = text_elem.text.strip()
+
+        # tweet ID URL推測
+        tweet_link = article.find("a", href=True)
+        tweet_url = "https://twitter.com" + tweet_link["href"] if tweet_link else ""
+
+        now = datetime.now().isoformat()
+        replies.append({
+            "username": username_reply,
+            "text": text,
+            "timestamp": now,
+            "reply_url": tweet_url,
+            "reply_to_id": "",  # 現時点では不明
+            "collected_at": now,
+            "original_text": f"@{username} 宛ての投稿"
+        })
+
+        if len(replies) >= MAX_REPLIES:
+            break
+
     return replies
-
-def get_tweet_urls(page, username):
-    page.goto(f"https://twitter.com/{username}")
-    time.sleep(5)
-    soup = BeautifulSoup(page.content(), "html.parser")
-    links = soup.find_all("a", href=True)
-    tweets = [f"https://twitter.com{a['href']}" for a in links if "/status/" in a['href']]
-    return list(dict.fromkeys(tweets))[:MAX_TWEETS]
 
 def _within_range(timestamp_str, cutoff_dt):
     try:
@@ -83,14 +85,11 @@ def main():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         for username in TARGET_USERS:
-            tweets = get_tweet_urls(page, username.strip())
-            for url in tweets:
-                print(f"🔍 {url}")
-                replies = get_replies_from_tweet(page, url, username)
-                all_replies.extend(replies)
+            replies = get_mentions_for_user(page, username.strip())
+            all_replies.extend(replies)
         browser.close()
 
-    cutoff = datetime.now() - timedelta(days=14)
+    cutoff = datetime.now() - timedelta(days=DAYS_LIMIT)
     filtered = [r for r in all_replies if _within_range(r['timestamp'], cutoff)]
     save_replies(filtered)
     print("✅ Done.")
