@@ -20,15 +20,11 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install dependencies
-        run: pip install requests beautifulsoup4 python-dotenv
+      - name: Install all dependencies from requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Update Nitter instance list
         run: python update_instances.py
-
-      - name: Install dependencies
-        run: pip install requests beautifulsoup4 python-dotenv cloudscraper
-
 
       - name: Run reply collector
         run: |
