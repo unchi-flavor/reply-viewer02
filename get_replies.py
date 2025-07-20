@@ -34,6 +34,8 @@ class NitterRepliesCollector:
 
     def find_working_instance(self):
         for instance in self.nitter_instances:
+            if "nitter" not in instance:
+                continue  # スキップ
             try:
                 print(f"🔍 Testing instance: {instance}")
                 test_url = f"{instance}/search?f=tweets&q=test"
