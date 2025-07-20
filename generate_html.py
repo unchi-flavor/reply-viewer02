@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import os
 from collections import defaultdict
 
@@ -10,9 +10,15 @@ def load_replies():
     except FileNotFoundError:
         return []
 
+# 日本時間のタイムゾーンを定義
+JST = timezone(timedelta(hours=9))
+
 def format_timestamp(ts_str):
     try:
         dt = datetime.fromisoformat(ts_str)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)  # UTC想定
+        dt = dt.astimezone(JST)  # JSTに変換
         return dt.strftime("%Y-%m-%d %H:%M")
     except:
         return ts_str or "不明"
@@ -83,7 +89,7 @@ def generate_html():
 
             html.append("</div>")  # group end
 
-    html.append("<p style='text-align:center;color:#888;font-size:0.9em;'>最終更新: " + format_timestamp(datetime.now().isoformat()) + "</p>")
+    html.append("<p style='text-align:center;color:#888;font-size:0.9em;'>最終更新: " + format_timestamp(datetime.now(timezone.utc).isoformat()) + "</p>")
     html.append("</body></html>")
 
     with open("index.html", "w", encoding="utf-8") as f:
