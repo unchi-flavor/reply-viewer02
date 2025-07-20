@@ -47,14 +47,22 @@ class NitterRepliesCollector:
             print(f"🌐 Fetching timeline from: {url}")
             response = requests.get(url, headers=self.headers, timeout=15)
             response.raise_for_status()
-            print(f"✅ Timeline HTML fetched for @{username} (size: {len(response.text)} bytes)")
-            return response.text
+
+            html = response.text
+            print(f"✅ Timeline HTML fetched for @{username} (size: {len(html)} bytes)")
+
+            # ログ用プレビュー
+            print("🔍 HTML preview (first 500 chars):")
+            print(html[:500].replace("\n", " ").replace("\r", " "))
+
+            # debug保存
+            with open("debug_timeline.html", "w", encoding="utf-8") as f:
+                f.write(html)
+
+            return html
         except requests.RequestException as e:
             print(f"❌ Error fetching timeline for {username}: {e}")
             return None
-
-        with open("debug_timeline.html", "w", encoding="utf-8") as f:
-            f.write(html)
 
     def parse_timeline(self, html, username):
         if not html:
