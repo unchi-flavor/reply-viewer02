@@ -7,6 +7,7 @@ import time
 import random
 import os
 from dotenv import load_dotenv
+import cloudscraper
 
 load_dotenv()
 
@@ -28,6 +29,7 @@ class NitterRepliesCollector:
         }
         self.target_users = os.getenv('TARGET_USERS', 'elonmusk').split(',')
         self.max_tweets_per_user = int(os.getenv('MAX_TWEETS', '50'))
+        self.scraper = cloudscraper.create_scraper()
 
         print(f"🔧 target_users = {self.target_users}")
         print(f"🔧 max_tweets_per_user = {self.max_tweets_per_user}")
@@ -51,7 +53,7 @@ class NitterRepliesCollector:
         try:
             url = f"{instance}/{username}"
             print(f"🌐 Fetching timeline from: {url}")
-            response = requests.get(url, headers=self.headers, timeout=15)
+            response = self.scraper.get(url, headers=self.headers, timeout=15)
             response.raise_for_status()
 
             html = response.text
