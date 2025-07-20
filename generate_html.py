@@ -68,25 +68,22 @@ def generate_html():
     else:
         for tweet_url, reply_list in grouped.items():
             html.append("<div class='group'>")
-
-            # 一番古いリプを元ツイートと仮定
-            base = reply_list[-1]
-            base_text = escape_html(base.get("text", "（元ツイート不明）"))
-            html.append(f"<div class='original'>🧵 元ツイート: {base_text}</div>")
-
+        
+            # original_text を reply から取得（最初の reply で十分）
+            original_text = escape_html(reply_list[0].get("original_text", "（元ツイート不明）"))
+            html.append(f"<div class='original'>🧵 元ツイート: {original_text}</div>")
+        
             for reply in reply_list:
-                if reply == base:
-                    continue
                 username = escape_html(reply.get("username", "unknown"))
                 text = escape_html(reply.get("text", ""))
                 time_str = format_timestamp(reply.get("timestamp"))
                 link = reply.get("reply_url", "#")
-
+        
                 html.append("<div class='reply'>")
                 html.append(f"<div class='reply-text'>{text}</div>")
                 html.append(f"<div class='meta'>by @{username} / {time_str} / <a href='{link}' target='_blank'>🔗 リプ元へ</a></div>")
                 html.append("</div>")
-
+        
             html.append("</div>")  # group end
 
     html.append("<p style='text-align:center;color:#888;font-size:0.9em;'>最終更新: " + format_timestamp(datetime.now(timezone.utc).isoformat()) + "</p>")
