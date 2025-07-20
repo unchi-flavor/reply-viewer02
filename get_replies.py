@@ -8,6 +8,7 @@ import random
 import os
 from dotenv import load_dotenv
 import cloudscraper
+from dateutil import parser  # ← NEW: 自由な日付フォーマット対応
 
 load_dotenv()
 
@@ -66,12 +67,13 @@ class NitterRepliesCollector:
                 continue
 
             text = text_elem.get_text(strip=True)
-            timestamp = date_elem.get("title")
+            timestamp = date_elem.get("title") or date_elem.text.strip()
             replies.append({
-                "reply_user": user_elem.text.strip(),
+                "username": user_elem.text.strip().lstrip('@'),
                 "text": text,
                 "timestamp": timestamp,
-                "in_reply_to": tweet_url,
+                "reply_to_id": tweet_url.split("/")[-1],  # ← NEW: 元ツイID
+                "reply_url": tweet_url,
                 "collected_at": datetime.now().isoformat()
             })
         return replies
@@ -90,7 +92,8 @@ class NitterRepliesCollector:
 
     def _within_range(self, timestamp_str, cutoff_dt):
         try:
-            return datetime.fromisoformat(timestamp_str) >= cutoff_dt
+            parsed = parser.parse(timestamp_str)
+            return parsed >= cutoff_dt
         except:
             return False
 
