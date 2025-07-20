@@ -66,7 +66,10 @@ class NitterRepliesCollector:
                 f.write(html)
 
             return html
-        except requests.RequestException as e:
+        except requests.HTTPError as e:
+            if response.status_code == 429:
+                print(f"🚫 Rate limited: {instance} ({e})")
+                return "RATE_LIMITED"
             print(f"❌ Error fetching timeline for {username}: {e}")
             return None
 
