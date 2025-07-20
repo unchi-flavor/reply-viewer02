@@ -53,6 +53,9 @@ class NitterRepliesCollector:
             print(f"❌ Error fetching timeline for {username}: {e}")
             return None
 
+        with open("debug_timeline.html", "w", encoding="utf-8") as f:
+            f.write(html)
+
     def parse_timeline(self, html, username):
         if not html:
             print("⚠️ No HTML to parse.")
