@@ -37,7 +37,10 @@ class NitterRepliesCollector:
                 test_url = f"{instance}/search?q=test"
                 res = self.scraper.get(test_url, headers=self.headers, timeout=10)
                 if res.status_code == 200 and "timeline" in res.text.lower():
+                    print(f"✅ Working Nitter instance: {instance}")
                     return instance
+                else:
+                    print(f"❌ Not working: {instance} (status {res.status_code})")
             except SSLError as e:
                 print(f"⚠️ SSLエラー: {instance} をスキップします ({e})")
                 continue
@@ -47,7 +50,8 @@ class NitterRepliesCollector:
             except Exception as e:
                 print(f"⚠️ その他のエラー: {instance} ({e})")
                 continue
-        raise Exception("No working Nitter instance found.")    
+        raise Exception("No working Nitter instance found.")
+    
     def get_user_tweet_urls(self, username, instance):
         url = f"{instance}/{username}"
         res = self.scraper.get(url, headers=self.headers, timeout=10)
