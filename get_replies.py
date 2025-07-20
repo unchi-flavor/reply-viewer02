@@ -19,20 +19,20 @@ def get_replies_from_tweet(page, tweet_url, username):
     soup = BeautifulSoup(page.content(), "html.parser")
     items = soup.find_all("article")
 
-    # 元ツイート本文の取得
-    original_text = ""
-    for item in items:
-        user_elem = item.find("a", href=True)
-        text_elem = item.find("div", attrs={"data-testid": "tweetText"})
-        if user_elem and text_elem and username in user_elem.text:
-            original_text = text_elem.text.strip()
-            break
+    if not items:
+        print("⚠️ No tweet content found.")
+        return replies
 
-    # リプライの収集
-    for item in items:
+    # 先頭の記事を元ツイートと仮定
+    first_item = items[0]
+    original_text_elem = first_item.find("div", attrs={"data-testid": "tweetText"})
+    original_text = original_text_elem.text.strip() if original_text_elem else "[元ツイート取得失敗]"
+
+    # 残りはリプライと仮定
+    for item in items[1:]:
         user_elem = item.find("a", href=True)
         text_elem = item.find("div", attrs={"data-testid": "tweetText"})
-        if user_elem and text_elem and username not in user_elem.text:
+        if user_elem and text_elem:
             timestamp = datetime.now().isoformat()
             replies.append({
                 "username": user_elem.text.strip(),
@@ -41,7 +41,7 @@ def get_replies_from_tweet(page, tweet_url, username):
                 "reply_to_id": tweet_url.split("/")[-1],
                 "reply_url": tweet_url,
                 "collected_at": timestamp,
-                "original_text": original_text  # ← ここを追加！
+                "original_text": original_text
             })
     return replies
 
