@@ -26,6 +26,10 @@ jobs:
       - name: Update Nitter instance list
         run: python update_instances.py
 
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 python-dotenv cloudscraper
+
+
       - name: Run reply collector
         run: |
           python get_replies.py
