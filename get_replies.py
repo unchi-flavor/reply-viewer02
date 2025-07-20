@@ -12,17 +12,17 @@ load_dotenv()
 
 class NitterRepliesCollector:
     def __init__(self):
-    try:
-        with open("nitter_instances.json", "r", encoding="utf-8") as f:
-            self.nitter_instances = json.load(f)
-    except:
-        self.nitter_instances = [
-            "https://nitter.poast.org",
-            "https://nitter.catsarch.com",
-            "https://nitter.zapashcanon.fr",
-            "https://nitter.kavin.rocks",
-            "https://nitter.salastil.com"
-        ]
+        try:
+            with open("nitter_instances.json", "r", encoding="utf-8") as f:
+                self.nitter_instances = json.load(f)
+        except:
+            self.nitter_instances = [
+                "https://nitter.poast.org",
+                "https://nitter.catsarch.com",
+                "https://nitter.zapashcanon.fr",
+                "https://nitter.kavin.rocks",
+                "https://nitter.salastil.com"
+            ]
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         }
