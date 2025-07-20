@@ -18,6 +18,17 @@ def get_replies_from_tweet(page, tweet_url, username):
     time.sleep(5)
     soup = BeautifulSoup(page.content(), "html.parser")
     items = soup.find_all("article")
+
+    # 元ツイート本文の取得
+    original_text = ""
+    for item in items:
+        user_elem = item.find("a", href=True)
+        text_elem = item.find("div", attrs={"data-testid": "tweetText"})
+        if user_elem and text_elem and username in user_elem.text:
+            original_text = text_elem.text.strip()
+            break
+
+    # リプライの収集
     for item in items:
         user_elem = item.find("a", href=True)
         text_elem = item.find("div", attrs={"data-testid": "tweetText"})
@@ -29,7 +40,8 @@ def get_replies_from_tweet(page, tweet_url, username):
                 "timestamp": timestamp,
                 "reply_to_id": tweet_url.split("/")[-1],
                 "reply_url": tweet_url,
-                "collected_at": timestamp
+                "collected_at": timestamp,
+                "original_text": original_text  # ← ここを追加！
             })
     return replies
 
