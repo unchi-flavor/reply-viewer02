@@ -35,7 +35,7 @@ def escape_html(text):
 def group_by_reply_to_id(replies):
     grouped = defaultdict(list)
     for r in replies:
-        key = r.get("reply_to_id") or "unknown"
+        key = r.get("in_reply_to") or "unknown"
         grouped[key].append(r)
     return grouped
 
@@ -77,11 +77,11 @@ def generate_html():
                 html.append("<h3>🧵 元ツイート不明</h3>")
 
             for reply in reply_list:
-                username = escape_html(reply.get("username", "unknown"))
+                username = escape_html(reply.get("reply_user", "unknown"))
                 text = escape_html(reply.get("text", ""))
                 time_str = format_timestamp(reply.get("timestamp"))
-                link = reply.get("reply_url", "#")
-
+                link = reply.get("in_reply_to", "#")
+            
                 html.append("<div class='reply'>")
                 html.append(f"<div class='reply-text'>{text}</div>")
                 html.append(f"<div class='meta'>by @{username} / {time_str} / <a href='{link}' target='_blank'>🔗 リプを見る</a></div>")
