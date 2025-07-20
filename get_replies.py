@@ -134,23 +134,35 @@ class NitterRepliesCollector:
         return result
 
     def collect_all_replies(self):
-        try:
-            instance = self.find_working_instance()
-        except Exception as e:
-            print(e)
-            return []
-
         all_replies = []
+    
         for username in self.target_users:
             username = username.strip()
             if not username:
                 continue
             print(f"\n📥 Collecting replies for @{username}")
-            html = self.get_user_timeline(username, instance)
+    
+            html = None
+            for instance in self.nitter_instances:
+                try:
+                    html = self.get_user_timeline(username, instance)
+                    if html == "RATE_LIMITED":
+                        print(f"⚠️ Skipping rate-limited instance: {instance}")
+                        continue
+                    elif html:  # 正常に取得
+                        break
+                except Exception as e:
+                    print(f"⚠️ Instance failed: {instance} ({e})")
+                    continue
+    
+            if not html:
+                print(f"❌ Failed to fetch timeline for @{username}")
+                continue
+    
             replies = self.parse_timeline(html, username)
             all_replies.extend(replies)
-            time.sleep(random.uniform(5, 10))
-
+            time.sleep(random.uniform(5, 10))  # polite delay
+    
         cutoff = datetime.now() - timedelta(days=14)
         recent_replies = [
             r for r in all_replies
