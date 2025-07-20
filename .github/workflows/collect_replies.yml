@@ -1,8 +1,5 @@
 name: Auto Collect Replies
 
-permissions:
-  contents: write
-
 on:
   schedule:
     - cron: '0 0,3,6,9,12 * * *'  # JSTで9時, 12時, 15時, 18時, 21時
@@ -15,18 +12,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      - name: Install all dependencies from requirements.txt
-        run: pip install -r requirements.txt
+      - name: Install Playwright and dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install
 
-      - name: Update Nitter instance list
-        run: python update_instances.py
-
-      - name: Run reply collector
+      - name: Run scraper
         run: |
           python get_replies.py
           python generate_html.py
@@ -35,13 +31,12 @@ jobs:
         run: |
           if [ ! -f replies.json ]; then
             echo "[]" > replies.json
-            echo "📝 Created empty replies.json"
           fi
 
-      - name: Commit and push updated index.html and replies.json
+      - name: Commit and push
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git add replies.json index.html
-          git commit -m "🤖 Auto update replies [skip ci]" || echo "No changes to commit"
+          git commit -m "🤖 Auto update replies [skip ci]" || echo "No changes"
           git push
